@@ -1,0 +1,6 @@
+.global main
+
+main:
+    dec r0
+    dec r0
+.end

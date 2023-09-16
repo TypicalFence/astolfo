@@ -13,7 +13,7 @@ fn main() {
         prog[byte.0] = *byte.1;
     }
     let mut cpu = cpu::Cpu::<32, 2048>::new();
-    cpu.load_program(prog);
+    cpu.load_program(&prog);
     for _ in 0..6 {
         cpu.tick();
         println!("{:?}", cpu.registers)

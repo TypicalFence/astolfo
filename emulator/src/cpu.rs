@@ -79,7 +79,63 @@ impl<const REGS: usize, const SRAM: usize> Cpu<REGS, SRAM> {
 
     }
 
-    pub(crate) fn load_program(&mut self, program: [u8; 32768]) {
-        self.flash = program;
+    fn clear_flash(&mut self) {
+        for byte in self.flash.iter_mut() {
+            *byte = 0;
+        }
+    }
+
+    pub fn load_program(&mut self, program: &[u8]) {
+        //assert!(program.len() > self.flash.len());
+        self.clear_flash();
+        for (i, byte) in program.iter().enumerate() {
+            self.flash[i] = *byte;
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn inc() {
+        let prog = include_bytes!("../test/inc.bin");
+        let mut cpu = super::Cpu::<32, 2048>::new();;
+        cpu.load_program(prog);
+        cpu.tick();
+        cpu.tick();
+        cpu.tick();
+        assert_eq!(cpu.registers[0], 2);
+        assert_eq!(cpu.registers[1], 1);
+    }
+
+    #[test]
+    fn dec() {
+        let prog = include_bytes!("../test/dec.bin");
+        let mut cpu = super::Cpu::<32, 2048>::new();;
+        cpu.load_program(prog);
+        cpu.registers[0] = 3;
+        cpu.tick();
+        cpu.tick();
+        assert_eq!(cpu.registers[0], 1);
+    }
+
+    #[test]
+    fn nop() {
+        let prog = include_bytes!("../test/nop.bin");
+        let mut cpu = super::Cpu::<4, 2048>::new();;
+        cpu.load_program(prog);
+        cpu.tick();
+        assert_eq!(cpu.registers, [0, 0, 0, 0]);
+    }
+
+
+    #[test]
+    fn add() {
+        let prog = include_bytes!("../test/add.bin");
+        let mut cpu = super::Cpu::<4, 2048>::new();;
+        cpu.registers = [1,2, 0, 0];
+        cpu.load_program(prog);
+        cpu.tick();
+        assert_eq!(cpu.registers, [3, 2, 0, 0]);
     }
 }
