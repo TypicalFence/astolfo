@@ -1,0 +1,7 @@
+.global main
+
+main:
+    ldi r16,12
+    ldi r20,40
+    ldi r24,80
+.end

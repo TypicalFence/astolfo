@@ -51,6 +51,14 @@ impl<const REGS: usize, const SRAM: usize> Cpu<REGS, SRAM> {
             Instruction::Add(rd, rr) => {
                 self.registers[rd as usize] =  self.registers[rd as usize] + self.registers[rr as usize];
             }
+            Instruction::Ldi(rd, k) => {
+                // Ldi addresses r16-r32 with 0-15
+                let reg = rd + 16;
+                if reg <= 15 {
+                    panic!("Invalid register, only register 16-32 are supported")
+                }
+                self.registers[reg as usize] =  k;
+            }
             Instruction::Nop => {}
         }
     }
@@ -137,5 +145,18 @@ mod test {
         cpu.load_program(prog);
         cpu.tick();
         assert_eq!(cpu.registers, [3, 2, 0, 0]);
+    }
+
+    #[test]
+    fn ldi() {
+        let prog = include_bytes!("../test/ldi.bin");
+        let mut cpu = super::Cpu::<32, 2048>::new();;
+        cpu.load_program(prog);
+        cpu.tick();
+        cpu.tick();
+        cpu.tick();
+        assert_eq!(cpu.registers[16], 12);
+        assert_eq!(cpu.registers[20], 40);
+        assert_eq!(cpu.registers[24], 80);
     }
 }

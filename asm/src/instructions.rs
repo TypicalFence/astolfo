@@ -1,5 +1,6 @@
 pub type Rd = u8;
 pub type Rr = u8;
+pub type K = u8;
 
 #[derive(Debug)]
 pub enum Instruction {
@@ -15,6 +16,10 @@ pub enum Instruction {
     ///
     /// [Atmel Documentation](https://ww1.microchip.com/downloads/en/devicedoc/atmel-0856-avr-instruction-set-manual.pdf#page=32)
     Add(Rd, Rr),
+    /// Loads an 8-bit constant directly to register 16 to 31.
+    ///
+    /// [Atmel Documentation](https://ww1.microchip.com/downloads/en/devicedoc/atmel-0856-avr-instruction-set-manual.pdf#page=115)
+    Ldi(Rd, K),
     Nop,
 }
 
@@ -33,8 +38,9 @@ fn parse_16(bits: u16) -> Option<Instruction> {
         return Some(Instruction::Nop);
     } else if let Some(i) = parse_rd(bits) {
         return Some(i);
-    }
-    else if let Some(i) = parse_rdrr(bits) {
+    } else if let Some(i) = parse_rdrr(bits) {
+        return Some(i);
+    } else if let Some(i) = parse_rdk(bits) {
         return Some(i);
     }
 
@@ -47,13 +53,12 @@ fn parse_rd(bits: u16) -> Option<Instruction> {
                        bits & 0b1111_1110_0000_1111;
 
     let rd = (bits & 0b0000_0001_1111_0000) >> 4;
-    let rdu8 =rd as u8;
+    let rdu8 = rd as u8;
     //println!("opcode: {:b}", opcode);
     //println!("rd: {}", rd);
     match opcode {
         0b1001_0100_0000_0011 => Some(Instruction::Inc(rdu8)),
         0b1001_0100_0000_1010 => Some(Instruction::Dec(rdu8)),
-
         _ => None,
     }
 }
@@ -68,6 +73,26 @@ fn parse_rdrr(bits: u16) -> Option<Instruction> {
 
     match opcode {
         0b0000_1100_0000_0000 => Some(Instruction::Add(rd as u8, rr as u8)),
+        _ => None,
+    }
+}
+
+/// rdk: `<|opcode|KKKK|dddd|KKKK|>`
+fn parse_rdk(bits: u16) -> Option<Instruction> {
+    println!("bits: {:b}", bits);
+    let opcode =
+        bits & 0b1111_0000_0000_0000;
+
+    let rd = ((bits & 0b0000_0000_1111_0000) >> 4) as u8;
+    // this is cursed
+    let k = (((bits & 0b0000_1111_0000_0000) >> 4) | (bits & 0b0000_0000_0000_1111)) as u8;
+    println!("k: {:b}", k);
+
+
+    println!("opcode: {:b}", opcode);
+
+    match opcode {
+        0b1110_0000_0000_0000 => Some(Instruction::Ldi(rd as u8, k as u8)),
         _ => None,
     }
 }
